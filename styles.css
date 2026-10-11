@@ -1,0 +1,650 @@
+@font-face {
+
+    font-family: 'sstroman';
+    src: url('/fonts/SSTRg.TTF') format('truetype');
+
+}
+
+@font-face {
+
+    font-family: 'sstlight';
+    src: url('/fonts/SSTLight.TTF') format('truetype');
+
+}
+
+@font-face {
+
+    font-family: 'sstmedium';
+    src: url('/fonts/SSTMedium.TTF') format('truetype');
+
+}
+
+@font-face {
+
+    font-family: 'sstbold';
+    src: url('/fonts/SSTBold.TTF') format('truetype');
+
+}
+
+html, body {
+
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: hidden;
+
+    inset: 0;
+
+}
+
+.bg {
+
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;          /* the real visible height on phones */
+    min-width: 100%;
+    min-height: 100%;
+    object-fit: cover;       /* same behavior as background-size: cover */
+    z-index: -1;
+    transition: opacity 0.6s linear;
+    pointer-events: none;
+
+}
+
+.ps5-dashboard {
+
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+
+    display: grid;
+
+
+    grid-template-rows:
+
+        minmax(6.1vw, 11vh)
+        minmax(12.5vw, 18vh)
+        1fr;
+
+    grid-template-columns: minmax(0, 1fr);   /* the important line */
+
+    overflow: hidden;
+
+}
+
+.top-bar {
+
+    display: flex;
+    align-items: center;
+
+    z-index: 2;
+
+    margin-top: -0.21vw;
+
+}
+
+.top-bar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 160%;            /* extends a bit below the bar so the fade is soft */
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.55) 0%,
+        rgba(0, 0, 0, 0) 100%
+    );
+    pointer-events: none;
+    z-index: -1;             /* behind the text, above the video/background */
+}
+
+.tabs {
+
+    display: flex;
+    gap: clamp(3.5vh, 4vw, 4vw);
+
+}
+
+
+.tabs p {
+
+    position: relative;
+    left: clamp(4vh, 4.8vw, 4.8vw);
+    
+    font-family: "sstlight";
+
+    font-size: clamp(
+        1.90vw,
+        3.43vh,
+        3.43vh
+    );
+
+    color: #929292;
+
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    transition:
+        color 0.1s ease,
+        transform 0.1s ease;
+
+}
+
+
+.tabs p::after {
+
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+
+    font-family: "sstbold";
+    color: rgb(255, 255, 255);
+
+    font-size: clamp(
+        1.90vw,
+        3.30vh,
+        3.30vh
+    );
+
+    opacity: 0;
+    transition: opacity 0.2s ease;
+
+}
+
+
+.tabs p:hover,
+.tabs p.active {
+
+    color: transparent;
+    transform: scale(1.05);
+
+}
+
+.tabs p:hover::after,
+.tabs p.active::after {
+
+    opacity: 1;
+
+}
+
+.hour {
+
+    margin-left: auto;
+    margin-right: clamp(3vh, 4.6vw, 4.6vw);
+    display: flex;
+    align-items: center;
+    gap: 1.5vw;
+
+}
+
+
+.hour p {
+
+    margin: 0;
+
+    font-family: "sstlight";
+    
+    font-size: clamp(
+        1.90vw,
+        3.43vh,
+        3.43vh
+    );
+
+    color: #ffffff;
+    
+
+}
+
+.hour p .seconds {
+
+    display: none;
+
+}
+
+.hour p:hover .seconds {
+
+    display: inline;
+
+}
+
+.hour p .seconds {
+
+    display: inline-block;
+    vertical-align: top;      /* fixes the baseline shift */
+    opacity: 0;
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;      /* prevents wrapping while max-width is small */
+    transition:
+        opacity 0.3s ease,
+        max-width 0.3s ease;
+
+}
+
+.hour p:hover .seconds {
+    opacity: 1;
+    max-width: 3ch;
+}
+
+.hour p .digit {
+
+    display: inline-block;
+    width: 1ch;            /* every digit takes the width of a "0" */
+    text-align: center;
+
+}
+
+.hour p:hover .seconds,
+.hour p.active .seconds {
+    opacity: 1;
+    max-width: 3ch;   /* keep whatever value you're using now */
+}
+
+.tools {
+
+    display: flex;
+    align-items: center;
+    position: absolute;
+    margin-top: 0.2vw;
+
+    margin-left: auto;
+    right: clamp(27vw, 40vh, 40vh);
+
+    gap: clamp(2vh, 2vw, 2vw);
+    
+    width: clamp(
+        2vw,
+        4vh,
+        4vh
+    );
+
+    
+    filter: invert(100%) sepia(4%) saturate(96%) hue-rotate(260deg) brightness(113%) contrast(88%);
+  
+    transition:
+        color 0.2s ease,
+        transform 0.2s ease;
+
+}
+
+.tools.hidden {
+
+    visibility: hidden;   /* not display:none, so we can still measure it */
+    opacity: 0;
+    transition: opacity 0.2s ease;
+
+}
+
+.tools img {
+        
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    transition: transform 0.1s ease;
+
+}
+
+.tools img:hover {
+
+    transform: scale(1.20);
+
+}
+
+.tools :hover::after {
+
+    opacity: 1;
+
+}
+
+.tools img:hover,
+.tools img.active {
+
+    transform: scale(1.20);
+
+}
+
+
+.main-content {
+
+    position: relative;
+    z-index: 2;
+
+}
+
+.carousel {
+
+    --small: 50cqh;      /* unselected tile size */
+    --large: 76cqh;      /* selected tile size */
+    --gap: clamp(1.6vh, 0.5vw, 12vw);
+
+    container-type: size;
+
+    display: flex;
+    align-items: center;
+
+    padding-left: clamp(8vh, 8.5vw, 8.5vw);   /* same left offset as your tabs */
+    height: 100%;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform-origin: left center;
+
+}
+
+
+.carousel-track {
+
+    display: flex;
+    align-items: flex-start;
+    gap: var(--gap);
+    height: var(--large); 
+
+    transform: translateX(calc(var(--i, 0) * (var(--small) + var(--gap)) * -1));
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+}
+
+.carousel.unfocused {
+
+    opacity: 0.4;
+    transform: scale(0.8);
+
+}
+
+.carousel { touch-action: pan-y; }
+
+.game {
+
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+    position: relative;
+    flex: 0 0 auto;
+    width: var(--small);
+    height: var(--small);
+
+    background-color: #222;
+    background-size: cover;
+    background-position: center;
+    border-radius: 2vh;
+
+    cursor: pointer;
+    opacity: 0.92;
+
+    outline: 0.3vh solid transparent;
+    outline-offset: 0.5vh;
+
+    transition:
+        width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+        height 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 0.35s ease,
+        outline-color 0.3s ease,
+        box-shadow 0.3s ease;
+
+}
+
+.game.active {
+
+    width: var(--large);
+    height: var(--large);
+    opacity: 1;
+
+    outline: 0.3vh solid #fff;
+    outline-offset: 0.5vh;
+    box-shadow: 0 0 3vh rgba(255, 255, 255, 0.25);
+
+}
+
+.game .title {
+
+    position: absolute;
+    top: 70%;
+    left: calc(100% + 2.5vh);
+    white-space: normal;
+    max-width: calc(50cqw - var(--large) / 2 - 4vh);
+    line-height: 1.15;
+    width: max-content;
+
+    font-family: "sstbold";
+    font-size: clamp(1.90vw, 3.30vh, 3.30vh);
+    color: #fff;
+
+    opacity: 0;
+    transform: translate(-1vh, 0);
+    transition: opacity 0.18s ease, transform 0.25s ease;
+
+}
+
+.game.active .title {
+
+    opacity: 1;
+    transform: translate(0, 0);
+
+}
+
+.bottom-bar {
+
+    position: relative;
+    z-index: 2;
+    display: grid;
+    
+    grid-template-columns: repeat(3, minmax(30vh, 1fr));
+    grid-template-rows: repeat(3, minmax(12vh, 1fr));
+    gap: clamp(1.2vh, 0.7vw, 0.7vw);
+
+    padding: clamp(8vh, 8.5vw, 8.5vw);
+    padding-bottom: clamp(5vw, 5vh, 5vh);
+    padding-top: clamp(4vw, 4vh, 4vh);
+
+    box-sizing: border-box;
+    transform-origin: center;
+
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+       
+    font-size: clamp(
+        0.7vw,
+        2vh,
+        2vh
+    );
+
+}
+
+.bottom-bar::-webkit-scrollbar { display: none; }
+
+.bottom-bar.snap {
+
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: var(--pad);
+
+}
+.bottom-bar.snap .card {
+
+    scroll-snap-align: inherit;
+
+}
+
+.bottom-bar.unfocused {
+
+    opacity: 0.4;
+    transform: scale(0.8);
+
+}
+
+.bottom-bar .card {
+
+    outline: 0.3vh solid transparent;
+    outline-offset: 0.5vh;
+    cursor: pointer;
+
+    transition:
+        transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+        box-shadow 0.3s ease,
+        outline-color 0.3s ease;
+
+}
+
+.bottom-bar .card.active {
+
+    transform: scale(1.03);
+    outline-color: #fff;
+    box-shadow: 0 0 3vh rgba(255, 255, 255, 0.25);
+    position: relative;
+    z-index: 1;
+
+}
+
+.carousel.cards-active .game.active {
+
+    outline-color: transparent;
+    box-shadow: none;
+    
+}
+
+.bottom-titles {
+
+    position: relative;
+    margin: 0;
+    padding-top: clamp(1.5vh, 0.7vw, 0.7vw);
+    padding-left: clamp(1.5vh, 1vw, 1vw);
+    color: #ffffff;
+    font-family: "sstroman";
+
+}
+
+.bottom-titles::before {
+
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 600%;            /* how far the fade reaches below the text */
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.55) 0%,
+        rgba(0, 0, 0, 0) 100%
+    );
+    pointer-events: none;
+    z-index: -1;             /* behind the text, above the card background */
+
+}
+
+.card {
+
+    background: rgba(0, 0, 0, 0.707);
+    backdrop-filter: blur(1vh);
+    -webkit-backdrop-filter: blur(1vh);
+
+    border-radius: clamp(0.7vh, 0.5vw, 0.5vw);
+    overflow: hidden;
+
+}
+
+.card,
+.card * {
+
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+
+}
+
+/* column 1 */
+
+.trophies { 
+
+    grid-column: 1; 
+    grid-row: 1; 
+
+}
+
+.controller { 
+
+    grid-column: 1; 
+    grid-row: 2; 
+
+}
+
+.storage {
+    
+    grid-column: 1; 
+    grid-row: 3; 
+
+}
+
+/* column 2 */
+
+.catalog {
+
+    position: relative;
+    display: grid;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, minmax(0, 2fr));
+    gap: 0;
+    padding: 0;
+
+}
+
+.catalog-images {
+
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    object-fit: cover;
+    border-radius: 0;
+
+}
+
+.catalog-images:first-of-type {
+
+    grid-column: span 2;     /* 2 + 6 = 8 cells, so the 4x2 grid fills exactly */
+
+}
+
+/* title floats over the images */
+
+.catalog .bottom-titles {
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+
+    z-index: 1;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
+    pointer-events: none;
+
+}
+
+.news { 
+
+    grid-column: 2; 
+    grid-row: 3; 
+
+}
+
+/* column 3 */
+
+.wishlist {
+
+    grid-column: 3; 
+    grid-row: 1; 
+
+}
+
+.gallery { 
+
+    grid-column: 3; 
+    grid-row: 2 / span 2; 
+
+}
