@@ -1,0 +1,65 @@
+@font-face {
+  font-family: 'wii u'; 
+  src: url('../content/fonts/wiiu.otf') format('opentype');
+}
+@font-face {
+  font-family: 'roboto'; 
+  src: url('../content/fonts/RobotoCondensed-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'smile';
+  src: url('../content/fonts/Smile.ttf') format('truetype');
+}
+
+html, body {
+
+  background-color: #b3dee9;
+  margin: 0%;
+  padding: 0%;
+    
+}
+
+.top-bar {
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position : fixed;
+  background-color: #ffffff;
+  width: 100vw;
+  height: 16.4vw;
+  max-height: 10vh;
+  z-index: 2;
+  top: 0vh;
+
+}
+
+
+.roelxds {
+
+  position: fixed;
+  left: 2vw;
+  transform: translateY(-50%);
+  width: 44vw;
+  max-width: 27vh;
+  z-index: 3;
+
+}
+
+.miiverse {
+
+  position: fixed;
+  right: 2vw;
+  transform: translateY(-50%);
+  width: 13vw;
+  max-width: 9.5vh;
+  z-index: 3;
+
+}
+
+.start {
+
+  margin-top: 100vh;
+
+}
+

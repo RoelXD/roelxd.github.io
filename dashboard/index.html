@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <link rel="stylesheet" href="styles.css">
+
+  </head>
+
+  <body>
+
+    <img class="bg" src="../content/images/background.jpeg">
+
+    <audio id="bgm" loop></audio>
+
+    <script>
+
+      const bgm = document.getElementById("bgm");
+      bgm.volume = 0.4;
+
+      const unlockEvents = ["pointerdown", "keydown", "touchend"];
+
+      function startMusic() {
+        bgm.play()
+          .then(() => unlockEvents.forEach(t => document.removeEventListener(t, startMusic)))
+          .catch(() => {});   // blocked: try again on the next gesture
+      }
+
+      startMusic();   // works if the browser allows autoplay
+      unlockEvents.forEach(t => document.addEventListener(t, startMusic));
+
+    </script>
+
+
+    <div class="ps5-dashboard">
+
+      <header class="top-bar">
+
+      <div class="tabs">
+
+        <p class="active" data-text="Games">Games</p>
+        <p data-text="Media" data-href="https://youtube.com/playlist?list=PLZ6G6as_54lQdsHnuKI7psuhZyIecs24i&si=VuTDi998JHaJ6sgB">Media</p>
+
+      </div>
+
+      <div class="hour">
+
+        <p id="time"></p>
+
+        <script>
+
+          const clockEl = document.getElementById("time");
+
+          const digits = str =>
+            str.replace(/\d/g, d => `<span class="digit">${d}</span>`);
+
+          function updateClock() {
+            const d = new Date();
+
+            let hour = d.getHours();
+            const ampm = hour >= 12 ? "PM" : "AM";
+            hour = hour % 12 || 12;
+
+            const minutes = String(d.getMinutes()).padStart(2, "0");
+            const seconds = String(d.getSeconds()).padStart(2, "0");
+
+            clockEl.innerHTML =
+              `${digits(`${hour}:${minutes}`)}` +
+              `<span class="seconds">:${digits(seconds)}</span> ${ampm}`;
+          }
+
+          updateClock();
+          setInterval(updateClock, 1000);
+
+        </script>
+
+      </div>
+
+      <div class="tools">
+
+        <img id="soundBtn" src="../content/images/mute.svg" alt="Sound off">
+    
+        <img src="../content/images/search.svg" alt="Search">
+
+        <img id="settingsBtn" src="../content/images/settings.svg" alt="Settings">
+
+        <script>
+
+          (function () {
+            const FOLDER = "../content/audio/";
+            const FADE_MS = 4000;
+            const MAX_VOLUME = 1;
+
+            const ICON_MUTE = "../content/images/mute.svg";
+            const ICON_VOLUME = "../content/images/volume.svg";
+
+            const soundBtn = document.getElementById("soundBtn");
+
+            // Two players so one can fade out while the other fades in
+            const a = document.getElementById("bgm");
+            const b = new Audio();
+            b.loop = true;
+            const players = [a, b];
+            let active = 0;
+            let currentHour = null;
+            let started = false;   // music engine has been started
+            let muted = true;      // the page starts muted
+            let tickId = null;
+
+            function trackForHour(h) {
+              const suffix = h < 12 ? "AM" : "PM";
+              const h12 = h % 12 === 0 ? 12 : h % 12;
+              return FOLDER + encodeURIComponent(h12 + " " + suffix + ".mp3");
+            }
+
+            const clamp = v => Math.min(1, Math.max(0, v));
+
+            function fade(player, from, to, ms, onDone) {
+              cancelAnimationFrame(player._fadeId);
+              const start = performance.now();
+              player.volume = clamp(from);
+              function step(now) {
+                const t = Math.min(Math.max((now - start) / ms, 0), 1);
+                player.volume = clamp(from + (to - from) * t);
+                if (t < 1) player._fadeId = requestAnimationFrame(step);
+                else if (onDone) onDone();
+              }
+              player._fadeId = requestAnimationFrame(step);
+            }
+
+            function switchTo(hour, instant) {
+              const outgoing = players[active];
+              const incoming = players[1 - active];
+
+              incoming.src = trackForHour(hour);
+              incoming.volume = 0;
+              incoming.play().catch(err => console.warn("Playback failed:", err));
+              fade(incoming, 0, MAX_VOLUME, instant ? 1 : FADE_MS);
+
+              if (outgoing.src) {
+                fade(outgoing, outgoing.volume, 0, FADE_MS, () => outgoing.pause());
+              }
+              active = 1 - active;
+              currentHour = hour;
+            }
+
+            function tick() {
+              const hour = new Date().getHours();
+              if (hour !== currentHour) switchTo(hour, currentHour === null);
+            }
+
+            function unmute() {
+              muted = false;
+              soundBtn.src = ICON_VOLUME;
+              soundBtn.alt = "Sound on";
+
+              if (!started) {
+                started = true;
+                tick();
+                tickId = setInterval(tick, 1000);
+              } else {
+                // resume the current track and fade it back in
+                const p = players[active];
+                p.play().catch(err => console.warn("Playback failed:", err));
+                fade(p, p.volume, MAX_VOLUME, 800);
+              }
+            }
+
+            function mute() {
+              muted = true;
+              soundBtn.src = ICON_MUTE;
+              soundBtn.alt = "Sound off";
+
+              // fade everything out, then pause
+              players.forEach(p => {
+                if (p.src && !p.paused) {
+                  fade(p, p.volume, 0, 500, () => p.pause());
+                }
+              });
+            }
+
+            soundBtn.addEventListener("click", () => (muted ? unmute() : mute()));
+
+            // If the hour changes while muted, tick() would start a new track audibly.
+            // Guard against that by wrapping switchTo's behavior:
+            const originalSwitchTo = switchTo;
+            switchTo = function (hour, instant) {
+              if (muted) {
+                // just prepare the track silently for when the user unmutes
+                const incoming = players[1 - active];
+                incoming.src = trackForHour(hour);
+                incoming.volume = 0;
+                incoming.pause();
+                players[active].pause();
+                active = 1 - active;
+                currentHour = hour;
+                return;
+              }
+              originalSwitchTo(hour, instant);
+            };
+
+              document.getElementById("settingsBtn").addEventListener("click", () => {
+              window.open("https://100.123.123.123:9090", "_blank", "noopener");
+            });
+            
+          })();
+
+        </script>
+
+        <script>
+        const tools = document.querySelector(".tools");
+        const tabs  = document.querySelector(".tabs");
+
+        function tabsRightEdge() {
+          return Math.max(
+            ...[...tabs.children].map(el => {
+              const range = document.createRange();
+              range.selectNodeContents(el);
+              return range.getBoundingClientRect().right;
+            })
+          );
+        }
+
+        function checkTools() {
+          // only the icons, not the hidden <audio>
+          const toolsLeft = Math.min(
+            ...[...tools.querySelectorAll("img")].map(img => img.getBoundingClientRect().left)
+          );
+
+          const minGap = window.innerWidth * 0.03;
+
+          tools.classList.toggle("hidden", tabsRightEdge() + minGap > toolsLeft);
+        }
+
+        const ro = new ResizeObserver(checkTools);
+        ro.observe(tabs);
+        ro.observe(tools);
+        ro.observe(document.body);
+        window.addEventListener("resize", checkTools);
+
+        // re-check once images have loaded, since their size affects the layout
+        tools.querySelectorAll("img").forEach(img => img.addEventListener("load", checkTools));
+        checkTools();
+        </script>
+
+      </div>
+
+
+      </header>
+
+      <main class="main-content">
+
+        <div class="carousel">
+
+          <div class="carousel-track" id="track"></div>
+
+          <script>
+
+            document.addEventListener("DOMContentLoaded", () => {
+
+              const games = [
+                { title: "Adguard", cover: "../content/images/adguard.webp", href: "http://100.123.123.123:3001" },
+                { title: "Audiomuse", cover: "../content/images/audiomuse.png", href: "http://100.123.123.123:8004" },
+                { title: "Crafty Controller", cover: "../content/images/crafty.jpeg", href: "http://100.123.123.123:8123" },
+                { title: "Earthwalker", cover: "../content/images/earthwalker.png", href: "http://100.123.123.123:8085" },
+                { title: "Immich", cover: "../content/images/immich.png", href: "http://100.123.123.123:2283" },
+                { title: "Jellyfin", cover: "../content/images/jellyfin.png", href: "http://100.123.123.123:8096" },
+                { title: "Aula Virtual", cover: "../content/images/moodle.png", href: "https://centros.edu.xunta.gal/iesteis/aulavirtual/my/" },
+                { title: "Pinchflat", cover: "../content/images/pinchflat.png", href: "http://100.123.123.123:8945" },
+                { title: "Siyuan", cover: "../content/images/siyuan.png", href: "http://100.123.123.123:6810" },
+                { title: "Portainer", cover: "../content/images/portainer.png", href: "http://100.123.123.123:9443" },
+                { title: "Synapse Admin", cover: "../content/images/matrix.png", href: "http://100.123.123.123:8345" }
+              ];
+
+              const track       = document.getElementById("track");
+              const carouselEl  = document.querySelector(".carousel");
+              const topBarEl    = document.querySelector(".top-bar");
+              const bottomBarEl = document.querySelector(".bottom-bar");
+              const tabEls      = [...document.querySelectorAll(".tabs p")];
+              const toolEls     = [...document.querySelectorAll(".tools img")];
+              const toolsBox    = document.querySelector(".tools");
+              const timeEl      = document.getElementById("time");
+              const cardEls     = [...document.querySelectorAll(".bottom-bar .card")];
+
+              let current       = 0;
+              let zone          = "games";   // "games" = carousel, "bar" = top bar, "cards" = bottom bar
+              let barIndex      = 1;         // selected item in the top bar
+              let cardIndex     = 0;         // selected card in the bottom bar
+
+              /* ---------- carousel ---------- */
+
+              games.forEach((game, i) => {
+                const el = document.createElement("a");
+                el.className = "game";
+
+                if (game.href && game.href !== "#") {
+                  el.href = game.href;
+                  el.target = "_blank";
+                  el.rel = "noopener noreferrer";
+                }
+
+                el.style.backgroundImage = `url("${game.cover}")`;
+                el.innerHTML = `<span class="title">${game.title}</span>`;
+                el.addEventListener("click", e => {
+                  if (i !== current) {          // first click only selects
+                    e.preventDefault();
+                    select(i);
+                  }
+                });
+                track.appendChild(el);
+              });
+
+              const tiles = [...track.children];
+
+              function select(index) {
+                current = Math.max(0, Math.min(games.length - 1, index));
+                track.style.setProperty("--i", current);
+                tiles.forEach((t, i) => t.classList.toggle("active", i === current));
+              }
+
+              /* ---------- top bar ---------- */
+
+              // order: Games, Media, search, settings, clock
+              // the tools are skipped when the overlap check has hidden them
+              function barItems() {
+                const base = toolsBox.classList.contains("hidden") ? tabEls : [...tabEls, ...toolEls];
+                return [...base, clockEl];
+              }
+
+              // tab links (Enter calls .click(), so this covers mouse and keyboard)
+              tabEls.forEach(tab => {
+                tab.addEventListener("click", () => {
+                  const url = tab.dataset.href;
+                  if (url) window.open(url, "_blank", "noopener");
+                });
+              });
+
+              /* ---------- bottom bar cards ---------- */
+
+              // HTML order: 0 trophies, 1 news, 2 wishlist, 3 controller, 4 gallery, 5 storage, 6 catalog
+              const cardNav = {
+                0: { right: 6, down: 3 },
+                1: { up: 6, left: 5, right: 4 },
+                2: { left: 6, down: 4 },
+                3: { up: 0, right: 6, down: 5 },
+                4: { up: 2, left: 1 },
+                5: { up: 3, right: 1 },
+                6: { up: undefined, left: 0, right: 2, down: 1 }
+              };
+
+              // hover selects (no scrolling here, so cards don't slide under the mouse)
+              cardEls.forEach((card, i) => {
+                card.addEventListener("mouseenter", () => {
+                  zone = "cards";
+                  cardIndex = i;
+                  render();
+                });
+              });
+
+              // hovering anywhere on the carousel makes it the active zone
+              carouselEl.addEventListener("mousemove", () => {
+                if (zone !== "games") {
+                  zone = "games";
+                  render();
+                }
+              });
+
+              // card links (Enter calls .click(), so this covers mouse, touch and keyboard)
+              cardEls.forEach(card => {
+                card.addEventListener("click", () => {
+                  const url = card.dataset.href;
+                  if (url) window.open(url, "_blank", "noopener");
+                });
+              });
+
+              /* ---------- bottom bar scroll modes ---------- */
+
+              function updateBarMode() {
+                const overflowing = bottomBarEl.scrollWidth > bottomBarEl.clientWidth + 1;
+                const col2 = cardEls[1];                                  // news = column 2
+                const col2Right = col2.offsetLeft + col2.offsetWidth;
+                const col2Hidden = col2Right > bottomBarEl.clientWidth;
+
+                // only column 3 off screen -> free scroll; column 2 off screen -> snap carousel
+                bottomBarEl.classList.toggle("snap", overflowing && col2Hidden);
+              }
+
+              function scrollToCard(card) {
+                const pad    = parseFloat(getComputedStyle(bottomBarEl).paddingLeft);
+                const left   = card.offsetLeft;
+                const right  = left + card.offsetWidth;
+                const view   = bottomBarEl.clientWidth;
+                const scroll = bottomBarEl.scrollLeft;
+
+                let target = scroll;
+                if (bottomBarEl.classList.contains("snap")) {
+                  target = left - pad;                    // carousel: card's column goes to the left edge
+                } else if (left - pad < scroll) {
+                  target = left - pad;                    // free scroll: only move if out of view
+                } else if (right + pad > scroll + view) {
+                  target = right + pad - view;
+                }
+                bottomBarEl.scrollTo({ left: target, behavior: "smooth" });
+              }
+
+              new ResizeObserver(updateBarMode).observe(bottomBarEl);
+              updateBarMode();
+
+              /* ---------- render ---------- */
+
+              function render() {
+                [...tabEls, ...toolEls, clockEl].forEach(el => el.classList.remove("active"));
+                cardEls.forEach(c => c.classList.remove("active"));
+
+                if (zone === "bar") {
+                  const items = barItems();
+                  barIndex = Math.min(barIndex, items.length - 1);
+                  items[barIndex].classList.add("active");
+                } else {
+                  tabEls[0].classList.add("active");
+                }
+
+                if (zone === "cards") cardEls[cardIndex].classList.add("active");
+
+                carouselEl.classList.toggle("unfocused", zone === "bar");
+                carouselEl.classList.toggle("cards-active", zone === "cards");
+                bottomBarEl.classList.toggle("unfocused", zone === "bar");
+                topBarEl.classList.toggle("focused", zone === "bar");
+              }
+
+              /* ---------- keyboard ---------- */
+
+              document.addEventListener("keydown", e => {
+
+                if (zone === "bar") {
+                  const items = barItems();
+                  if (e.key === "ArrowRight") barIndex = Math.min(items.length - 1, barIndex + 1);
+                  if (e.key === "ArrowLeft")  barIndex = Math.max(0, barIndex - 1);
+                  if (e.key === "Enter")      items[barIndex].click();
+                  if (e.key === "ArrowDown")  { e.preventDefault(); zone = "games"; }
+                  render();
+                  return;
+                }
+
+                if (zone === "cards") {
+                  if (e.key.startsWith("Arrow")) e.preventDefault();
+                  const dir = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" }[e.key];
+
+                  if (dir) {
+                    const target = cardNav[cardIndex][dir];
+                    if (target !== undefined) cardIndex = target;
+                    else if (dir === "up") zone = "games";     // top row goes back to the carousel
+                  }
+                  if (e.key === "Enter") cardEls[cardIndex].click();
+                  render();
+                  if (zone === "cards") scrollToCard(cardEls[cardIndex]);
+                  return;
+                }
+
+                // zone === "games"
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  zone = "bar";
+                  barIndex = 1;          // start on Media
+                  render();
+                  return;
+                }
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  zone = "cards";
+                  cardIndex = 0;
+                  render();
+                  scrollToCard(cardEls[0]);
+                  return;
+                }
+                if (e.key === "ArrowRight") select(current + 1);
+                if (e.key === "ArrowLeft")  select(current - 1);
+                if (e.key === "Enter")      tiles[current].click();
+              });
+
+              /* ---------- mouse wheel / trackpad ---------- */
+
+              let wheelLock = false;
+              document.addEventListener("wheel", e => {
+                if (zone !== "games" || wheelLock) return;
+                const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+                if (Math.abs(delta) < 10) return;
+                select(current + (delta > 0 ? 1 : -1));
+                wheelLock = true;
+                setTimeout(() => (wheelLock = false), 200);
+              }, { passive: true });
+
+              /* ---------- touch swipe ---------- */
+
+              let startX = 0, startY = 0;
+
+              carouselEl.addEventListener("touchstart", e => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+              }, { passive: true });
+
+              carouselEl.addEventListener("touchend", e => {
+                const dx = e.changedTouches[0].clientX - startX;
+                const dy = e.changedTouches[0].clientY - startY;
+
+                // only count mostly-horizontal swipes
+                if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+                  select(current + (dx < 0 ? 1 : -1));   // swipe left = next game
+                }
+              });
+
+              /* ---------- init ---------- */
+
+              select(0);
+              render();
+
+            });
+
+          </script>
+
+        </div>
+      
+      </main>
+
+      <footer class="bottom-bar">
+
+        <div class="card trophies">
+
+          <p class="bottom-titles" >Trophies</p>
+
+        </div>
+
+        <div class="card news">
+
+          <p class="bottom-titles" >News</p>
+
+        </div>
+
+        <div class="card wishlist">
+
+          <p class="bottom-titles" >Wishlist</p>
+
+        </div>
+
+        <div class="card controller">
+
+          <p class="bottom-titles" >Controller</p>
+
+        </div>
+
+        <div class="card gallery">
+
+          <p class="bottom-titles" >Gallery</p>
+
+        </div>
+
+        <div class="card storage">
+
+          <p class="bottom-titles" >Storage</p>
+
+        </div>
+
+        <div class="card catalog" data-href="https://steamcommunity.com/id/roelxd/">
+
+          <p class="bottom-titles">Game Catalog</p>
+
+          <img class="catalog-images" src="https://shared.fastly.steamstatic.com/store_item_assets//steam/apps/438100/header.jpg?t=1762366454" alt="">
+
+          <img class="catalog-images" src="https://shared.fastly.steamstatic.com/store_item_assets//steam/apps/3404260/ae0f4b71735adf4f2494ecb7914fcbafee215277/header.jpg?t=1790698491" alt="">
+
+          <img class="catalog-images" src="https://shared.fastly.steamstatic.com/store_item_assets//steam/apps/433340/header.jpg?t=1758651509" alt="">
+
+          <img class="catalog-images" src="https://shared.fastly.steamstatic.com/store_item_assets//steam/apps/4704690/163e2a742e5fb8e1f5d1e3a890da98f04ab809d4/header.jpg?t=1789464996" alt="">
+            
+          <img class="catalog-images" src="https://shared.fastly.steamstatic.com/store_item_assets//steam/apps/413150/header.jpg?t=1786554168" alt="">
+            
+          <img class="catalog-images" src="https://shared.fastly.steamstatic.com/store_item_assets//steam/apps/3527290/31bac6b2eccf09b368f5e95ce510bae2baf3cfcd/header.jpg?t=1790591892" alt="">
+            
+          <img class="catalog-images" src="https://shared.fastly.steamstatic.com/store_item_assets//steam/apps/1671210/7ccda5b1631d2e60cc756a3271e845dbb9168821/header.jpg?t=1782314340" alt="">
+      
+      </footer>
+
+    </div>
+
+
+  </body>
+
+</html>
+
+

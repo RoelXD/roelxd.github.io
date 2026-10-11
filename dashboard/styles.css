@@ -1,28 +1,28 @@
 @font-face {
 
     font-family: 'sstroman';
-    src: url('/fonts/SSTRg.TTF') format('truetype');
+    src: url('../content/fonts/SSTRg.TTF') format('truetype');
 
 }
 
 @font-face {
 
     font-family: 'sstlight';
-    src: url('/fonts/SSTLight.TTF') format('truetype');
+    src: url('../content/fonts/SSTLight.TTF') format('truetype');
 
 }
 
 @font-face {
 
     font-family: 'sstmedium';
-    src: url('/fonts/SSTMedium.TTF') format('truetype');
+    src: url('../content/fonts/SSTMedium.TTF') format('truetype');
 
 }
 
 @font-face {
 
     font-family: 'sstbold';
-    src: url('/fonts/SSTBold.TTF') format('truetype');
+    src: url('../content/fonts/SSTBold.TTF') format('truetype');
 
 }
 

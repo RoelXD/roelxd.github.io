@@ -1,0 +1,110 @@
+@font-face {
+
+  font-family: 'Wii U'; /* Name of the font */
+  src: url('../content/fonts/wiiu.otf') format('opentype');
+
+}
+@font-face {
+
+  font-family: 'roboto'; /* Name of the font */
+  src: url('../content/fonts/roboto.ttf') format('truetype');
+
+}
+@font-face {
+
+  font-family: 'smile'; /* Name of the font */
+  src: url('../content/fonts/smile.ttf') format('truetype');
+
+}
+  
+::-webkit-scrollbar {
+
+  display: none;
+
+}
+  
+  
+html, body {
+
+  background-color: #b3dee9;
+  margin: 0%;
+  padding: 0%;
+    
+}
+
+
+.top-bar {
+
+  position : fixed;
+  background-color: #ffffff;
+  width: 100vw;
+  height: 16.4vh;
+  z-index: 3;
+
+}
+
+
+.roelxds {
+
+  left: 3vh;
+  top: 2.4vh;
+  width: 48vh;
+  position: fixed;
+  z-index: 3;
+
+}
+
+.miiverse {
+
+  position: fixed;
+  display: flex;
+  overflow: visible;
+  right: 3vh;
+  top: 1.5vh;
+  height: 13vh;
+  z-index: 3;
+
+}
+  
+
+.cloud1 {
+
+  margin-top: -21vh;
+  margin-left: 5vh;
+  width: 100vh;
+
+}
+.cloud2 {
+
+  margin-top: -155vh;
+  margin-left: 23vh;
+  width: 120vh;    
+
+}
+
+.start {
+
+  font-family: "Wii U";
+  margin-top: -21vh;
+  padding-left: 11vh;
+
+}
+
+.smiley {
+
+  font-family: "Smile";
+  font-size: 30vh;
+  position: absolute;
+  z-index: 1;
+  right: 15vh;
+  margin-top: -10vh;
+
+}
+
+.text {
+
+  margin-top: 65vh;
+  padding-left: 5vh;
+  font-family: "Wii U";
+
+}
