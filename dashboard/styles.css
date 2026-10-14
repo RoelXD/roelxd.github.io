@@ -444,6 +444,7 @@ html, body {
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
+    touch-action: pan-x;
        
     font-size: clamp(
         0.7vw,
@@ -458,12 +459,12 @@ html, body {
 .bottom-bar.snap {
 
     scroll-snap-type: x mandatory;
-    scroll-padding-left: var(--pad);
+    scroll-padding-left: clamp(8vh, 8.5vw, 8.5vw);   /* same as the bar's left padding */
 
 }
 .bottom-bar.snap .card {
 
-    scroll-snap-align: inherit;
+    scroll-snap-align: start;
 
 }
 
