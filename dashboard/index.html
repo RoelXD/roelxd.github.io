@@ -413,6 +413,41 @@
 
               /* ---------- render ---------- */
 
+              /* ---------- card slideshows ---------- */
+
+              const SLIDE_MS = 2000;
+
+              const slideshows = cardEls
+                .map(card => ({
+                  card,
+                  slides: [...card.querySelectorAll(".catalog-images, .gallery-images")],
+                  index: 0,
+                  timer: null
+                }))
+                .filter(s => s.slides.length > 1);
+
+              function showSlide(s, i) {
+                s.index = i;
+                s.slides.forEach((img, n) => img.classList.toggle("current", n === i));
+              }
+
+              function syncSlideshows() {
+                slideshows.forEach(s => {
+                  const shouldRun = zone === "cards" && s.card.classList.contains("active");
+
+                  if (shouldRun && !s.timer) {
+                    s.timer = setInterval(
+                      () => showSlide(s, (s.index + 1) % s.slides.length),
+                      SLIDE_MS
+                    );
+                  } else if (!shouldRun && s.timer) {
+                    clearInterval(s.timer);
+                    s.timer = null;
+                    showSlide(s, 0);            // back to the first image when deselected
+                  }
+                });
+              }
+
               function render() {
                 [...tabEls, ...toolEls, clockEl].forEach(el => el.classList.remove("active"));
                 cardEls.forEach(c => c.classList.remove("active"));
@@ -431,6 +466,7 @@
                 carouselEl.classList.toggle("cards-active", zone === "cards");
                 bottomBarEl.classList.toggle("unfocused", zone === "bar");
                 topBarEl.classList.toggle("focused", zone === "bar");
+                syncSlideshows();   // <-- add this
               }
 
               /* ---------- keyboard ---------- */
@@ -557,6 +593,16 @@
 
           <p class="bottom-titles" >Gallery</p>
 
+          <img class="gallery-images current" src="https://scontent-mad1-1.cdninstagram.com/v/t51.82787-15/830900225_18119127541991797_1450295730928335302_n.jpg?stp=dst-jpegr_e35_tt6&_nc_cat=107&ig_cache_key=Mzk5OTAxMTg0NzcwNzU4ODUxOA%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNBUk9VU0VMX0lURU0ueHBpZHMuMTQ0MC5oZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=hncCqhmeKNYQ7kNvwH4XG1z&_nc_oc=AdqDbqHk3A0yljIlFMVifOcf1G9UeIlZloQg5yXJM3xJqXIPvC5zkp1pXVlSeCrVhBE&_nc_zt=23&se=-1&_nc_ht=scontent-mad1-1.cdninstagram.com&_nc_gid=TA4IapkE_XbRiYdEH_bLmg&_nc_ss=7b689&oh=00_AQPBDibjXvcoM72UWj1VIwAo0WOGFebNDcbJJS7MhNMoww&oe=6AD6C25E" alt="">
+
+          <img class="gallery-images" src="https://scontent-mad1-1.cdninstagram.com/v/t51.82787-15/645938666_18097136668991797_2743045281641035003_n.jpg?stp=dst-jpg_e35_s640x640_tt6&_nc_cat=105&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0FST1VTRUxfSVRFTS5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=HlRsiYJwg5EQ7kNvwE5n72F&_nc_oc=Adpb1fo9qJ8mBron24BKLkAxYz-xJJ96yvjM_JjFzcYYbdxgzRjXsgpgkdLU8yj9Mcs&_nc_zt=23&_nc_ht=scontent-mad1-1.cdninstagram.com&_nc_gid=IXdDNz_71qmJb_e_FDnnjQ&_nc_ss=7b689&oh=00_AQMCBddUH5kd2EUTSwAG6u0WckKQN25CEi0glYgzjKzqVQ&oe=6AD6C452" alt="">
+
+          <img class="gallery-images" src="https://scontent-mad2-1.cdninstagram.com/v/t51.82787-15/553487866_18081285061991797_4833935300396343778_n.heic?stp=dst-jpg_e35_s640x640_tt6&_nc_cat=108&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0FST1VTRUxfSVRFTS5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=NTm-OvcCKH8Q7kNvwFzLXPB&_nc_oc=AdpzAORTlKl0UsMS_1mlF7E-QxnGLNXM6S0k8dGWV0OAUyS5FqQ0qBaqPwaa8xnMPXg&_nc_zt=23&_nc_ht=scontent-mad2-1.cdninstagram.com&_nc_gid=i4xDo6tNwa6QAEONsyF6RA&_nc_ss=7b689&oh=00_AQOIzLtxzQTzs9e-JP8bpf5MO5RZswle3IeHMMp1Uq4ENA&oe=6AD71AA3" alt="">
+
+          <img class="gallery-images" src="https://scontent-mad1-1.cdninstagram.com/v/t51.82787-15/722224161_18107484268991797_7471453336857283447_n.jpg?stp=dst-jpg_e35_s640x640_tt6&_nc_cat=101&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0FST1VTRUxfSVRFTS5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=6jtUJDda4z0Q7kNvwGFUIkv&_nc_oc=AdpVLtH2zXx5yKdJZqvFfqGHOq3iliUxkxhaRcaE-Hfj89aA1MCBvUPtU2vj70rtvIo&_nc_zt=23&_nc_ht=scontent-mad1-1.cdninstagram.com&_nc_gid=i4xDo6tNwa6QAEONsyF6RA&_nc_ss=7b689&oh=00_AQPG0X4VmN_ScT7NKQ07lXO0JDK8EvhY9qJtt6ABOvejHQ&oe=6AD717C8" alt="">
+
+          <img class="gallery-images" src="https://scontent-mad2-1.cdninstagram.com/v/t51.82787-15/799239140_18116602834991797_4111939933279852450_n.jpg?stp=dst-jpg_e35_s640x640_tt6&_nc_cat=109&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0FST1VTRUxfSVRFTS5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=DUn1H3nQyDAQ7kNvwGNez7H&_nc_oc=Adp_utP2LLCX6XXuMWnjB99Ir2VEVPhB-DFlhLhow5KfpUs5ifSPcmoM2DBgRsqdEoQ&_nc_zt=23&_nc_ht=scontent-mad2-1.cdninstagram.com&_nc_gid=i4xDo6tNwa6QAEONsyF6RA&_nc_ss=7b689&oh=00_AQNbnkONknMS_rPNTmR3vou2KCOhcF5AcEkOgUp9EZzodg&oe=6AD6EA19" alt="">
+          
         </div>
 
         <div class="card storage">
@@ -569,7 +615,7 @@
 
           <p class="bottom-titles">Game Catalog</p>
 
-          <img class="catalog-images" src="https://shared.fastly.steamstatic.com/store_item_assets//steam/apps/438100/header.jpg?t=1762366454" alt="">
+          <img class="catalog-images current" class="images" src="https://shared.fastly.steamstatic.com/store_item_assets//steam/apps/438100/header.jpg?t=1762366454" alt="">
 
           <img class="catalog-images" src="https://shared.fastly.steamstatic.com/store_item_assets//steam/apps/3404260/ae0f4b71735adf4f2494ecb7914fcbafee215277/header.jpg?t=1790698491" alt="">
 
@@ -583,6 +629,8 @@
             
           <img class="catalog-images" src="https://shared.fastly.steamstatic.com/store_item_assets//steam/apps/1671210/7ccda5b1631d2e60cc756a3271e845dbb9168821/header.jpg?t=1782314340" alt="">
       
+        </div>
+
       </footer>
 
     </div>
